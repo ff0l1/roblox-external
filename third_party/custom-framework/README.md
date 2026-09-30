@@ -51,7 +51,7 @@ turns on the Vulkan backend.
 ## Hello
 
 ```cpp
-#include "ur/ur.hpp"
+#include "ur/ur.hxx"
 
 int WINAPI WinMain( HINSTANCE, HINSTANCE, LPSTR, int ) {
     ur::app::Config Config;

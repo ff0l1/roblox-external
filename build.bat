@@ -2,88 +2,42 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
-if /i "%~1"=="--help" goto :help
-if /i "%~1"=="-h" goto :help
-if /i "%~1"=="/?" goto :help
+set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+set "CMAKE="
+where cmake >nul 2>&1 && set "CMAKE=cmake"
+if not defined CMAKE if exist "%ProgramFiles%\CMake\bin\cmake.exe" set "CMAKE=%ProgramFiles%\CMake\bin\cmake.exe"
+if not defined CMAKE if exist "%ProgramFiles%\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" set "CMAKE=%ProgramFiles%\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
+if not defined CMAKE if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" set "CMAKE=%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
 
-set "PRESET=windows-release"
-if /i "%~1"=="--debug" set "PRESET=windows-debug"
+if exist "%~dp0CMakeLists.txt" goto :cmake
+goto :sln
 
-set "VSDEV="
-if defined VSINSTALLDIR if exist "%VSINSTALLDIR%\Common7\Tools\VsDevCmd.bat" set "VSDEV=%VSINSTALLDIR%\Common7\Tools\VsDevCmd.bat"
-
-if not defined VSDEV if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat" set "VSDEV=%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat"
-if not defined VSDEV if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Professional\Common7\Tools\VsDevCmd.bat" set "VSDEV=%ProgramFiles%\Microsoft Visual Studio\2022\Professional\Common7\Tools\VsDevCmd.bat"
-if not defined VSDEV if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" set "VSDEV=%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
-if not defined VSDEV if exist "%ProgramFiles%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat" set "VSDEV=%ProgramFiles%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
-if not defined VSDEV if exist "%ProgramFiles%\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" set "VSDEV=%ProgramFiles%\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat"
-if not defined VSDEV if exist "%ProgramFiles%\Microsoft Visual Studio\18\Professional\Common7\Tools\VsDevCmd.bat" set "VSDEV=%ProgramFiles%\Microsoft Visual Studio\18\Professional\Common7\Tools\VsDevCmd.bat"
-if not defined VSDEV if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat" set "VSDEV=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
-
-if not defined VSDEV (
-    echo Error: Visual Studio with C++ and CMake was not found.
-    echo Install Visual Studio 2022 or newer with "Desktop development with C++".
-    echo Example: build.bat
+:cmake
+if not defined CMAKE (
+    echo [-] cmake was not found. Install CMake or Visual Studio with C++.
     exit /b 1
 )
+echo [+] cmake
+"%CMAKE%" -S "%~dp0." -B "%~dp0build" -A x64
+if errorlevel 1 exit /b 1
+"%CMAKE%" --build "%~dp0build" --config Release
+exit /b %errorlevel%
 
-if not exist "third_party\custom-framework\CMakeLists.txt" (
-    echo Error: third_party\custom-framework is missing.
-    echo Download the full source zip from GitHub, not a sparse checkout.
+:sln
+set "SLN="
+for %%S in ("%~dp0*.sln") do set "SLN=%%~fS"
+if not defined SLN (
+    echo [-] no CMakeLists.txt or solution
     exit /b 1
 )
-
-if not exist "third_party\fonts\Poppins-Regular.ttf" (
-    echo Error: third_party\fonts is missing.
-    echo Download the full source zip from GitHub.
+set "MSBUILD="
+if exist "%VSWHERE%" (
+    for /f "usebackq delims=" %%M in (`"%VSWHERE%" -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe`) do set "MSBUILD=%%M"
+)
+if not defined MSBUILD (
+    echo [-] MSBuild was not found. Install Visual Studio with C++.
     exit /b 1
 )
-
-echo Using: %VSDEV%
-call "%VSDEV%" -arch=x64 -host_arch=x64 >nul
-if errorlevel 1 (
-    echo Error: VsDevCmd failed.
-    exit /b 1
-)
-
-where cmake >nul 2>nul
-if errorlevel 1 (
-    echo Error: cmake was not on PATH after VsDevCmd.
-    echo In the Visual Studio installer, enable "C++ CMake tools for Windows".
-    exit /b 1
-)
-
-cmake --preset %PRESET%
-if errorlevel 1 (
-    echo Error: cmake configure failed.
-    echo Example: build.bat
-    exit /b 1
-)
-
-cmake --build --preset %PRESET%
-if errorlevel 1 (
-    echo Error: build failed.
-    echo Example: build.bat
-    exit /b 1
-)
-
-set "OUT=build\%PRESET%\ff0l.exe"
-if not exist "%OUT%" (
-    echo Error: %OUT% was not built.
-    exit /b 1
-)
-
-echo Built %OUT%
-echo Run: "%~dp0%OUT%"
-exit /b 0
-
-:help
-echo Build FF0L. Uses the vendored framework and fonts in third_party.
-echo No extra clones. Needs Visual Studio 2022 or newer with C++ and CMake.
-echo.
-echo Examples:
-echo   build.bat
-echo   build.bat --debug
-echo.
-echo Output: build\windows-release\ff0l.exe
-exit /b 0
+echo [+] msbuild
+"%MSBUILD%" "%SLN%" /m /p:Configuration=Release /p:Platform=x64
+exit /b %errorlevel%

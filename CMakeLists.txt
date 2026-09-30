@@ -20,7 +20,7 @@ endif( )
 
 add_subdirectory( "${UR_ROOT}" "${CMAKE_BINARY_DIR}/ur" )
 
-add_executable( ff0l WIN32 src/Main.cpp )
+add_executable( ff0l WIN32 src/Main.cxx )
 target_link_libraries( ff0l PRIVATE ur winhttp )
 target_include_directories( ff0l PRIVATE src )
 
