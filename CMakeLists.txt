@@ -20,9 +20,15 @@ endif( )
 
 add_subdirectory( "${UR_ROOT}" "${CMAKE_BINARY_DIR}/ur" )
 
-add_executable( ff0l WIN32 src/Main.cxx )
+add_executable( ff0l WIN32 src/app/Main.cxx )
 target_link_libraries( ff0l PRIVATE ur winhttp )
-target_include_directories( ff0l PRIVATE src )
+target_include_directories( ff0l PRIVATE
+    src/app
+    src/ui
+    src/world
+    src/play
+    src/explorer
+)
 
 if( MSVC )
     target_compile_options( ff0l PRIVATE /W4 /utf-8 /EHsc )

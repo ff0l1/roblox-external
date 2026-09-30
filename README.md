@@ -184,12 +184,14 @@ Output: `build\windows-release\ff0l.exe` (or `build\windows-debug\ff0l.exe`). Th
 ## Layout
 
 ```
-build.bat           one-click compile
-assets/             fonts, icons, themes (copied next to the built exe)
-src/                overlay, aim, ESP, configs
-third_party/custom-framework   bundled UI library
-third_party/fonts              Poppins + Font Awesome
-media/              README preview, menu clip, in-game clip
+src/app          window
+src/ui           theme, configs, shader fills
+src/world        offsets and actor snapshot
+src/play         aim, movement
+src/explorer     DataModel tree
+third_party/custom-framework
+third_party/fonts
+media/
 ```
 
 ---
