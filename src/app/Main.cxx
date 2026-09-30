@@ -13,6 +13,7 @@
 #include <cstring>
 #include <string>
 
+#include "bundle.hxx"
 #include "catalog.hxx"
 #include "store.hxx"
 #include "offsets.hxx"
@@ -3829,6 +3830,7 @@ static void BindFace( ) {
 }
 
 int WINAPI WinMain( HINSTANCE, HINSTANCE, LPSTR, int ) {
+    bundle::Boot( );
     BindFace( );
 
     ur::overlay::Options& Overlay = ur::app::overlay_options( );

@@ -14,13 +14,27 @@ set( UR_BUILD_DEMO OFF CACHE BOOL "" FORCE )
 set( UR_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/custom-framework" )
 set( FONT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/fonts" )
 
+function( rc_quote out abs )
+    file( TO_CMAKE_PATH "${abs}" slash )
+    set( ${out} "${slash}" PARENT_SCOPE )
+endfunction( )
+
+rc_quote( FONT_POPPINS_REGULAR "${FONT_DIR}/Poppins-Regular.ttf" )
+rc_quote( FONT_POPPINS_MEDIUM "${FONT_DIR}/Poppins-Medium.ttf" )
+rc_quote( FONT_POPPINS_SEMIBOLD "${FONT_DIR}/Poppins-SemiBold.ttf" )
+rc_quote( FONT_FA_SOLID "${FONT_DIR}/fa-solid-900.woff2" )
+rc_quote( FONT_FA_REGULAR "${FONT_DIR}/fa-regular-400.woff2" )
+rc_quote( FONT_FA_LIGHT "${FONT_DIR}/fa-light-300.woff2" )
+
+configure_file( src/app/ff0l.rc.in "${CMAKE_CURRENT_BINARY_DIR}/ff0l.rc" @ONLY )
+
 if( NOT EXISTS "${UR_ROOT}/CMakeLists.txt" )
     message( FATAL_ERROR "Missing ${UR_ROOT}. The source tree must include third_party/custom-framework." )
 endif( )
 
 add_subdirectory( "${UR_ROOT}" "${CMAKE_BINARY_DIR}/ur" )
 
-add_executable( ff0l WIN32 src/app/Main.cxx )
+add_executable( ff0l WIN32 src/app/Main.cxx "${CMAKE_CURRENT_BINARY_DIR}/ff0l.rc" )
 target_link_libraries( ff0l PRIVATE ur winhttp )
 target_include_directories( ff0l PRIVATE
     src/app
